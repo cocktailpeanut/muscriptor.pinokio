@@ -1,0 +1,27 @@
+{
+  "title": "MuScriptor",
+  "description": "Local multi-instrument audio-to-MIDI transcription from Kyutai and Mirelo.",
+  "icon": "icon.png",
+  "links": [{
+    "title": "MuScriptor",
+    "links": [{
+      "title": "GitHub",
+      "value": "https://github.com/muscriptor/muscriptor"
+    }, {
+      "title": "Online demo",
+      "value": "https://muscriptor.kyutai.org"
+    }, {
+      "title": "Small model",
+      "value": "https://huggingface.co/cocktailpeanut/muscriptor-small"
+    }, {
+      "title": "Medium model",
+      "value": "https://huggingface.co/cocktailpeanut/muscriptor-medium"
+    }, {
+      "title": "Large model",
+      "value": "https://huggingface.co/cocktailpeanut/muscriptor-large"
+    }, {
+      "title": "Paper",
+      "value": "https://arxiv.org/abs/2607.08168"
+    }]
+  }]
+}
