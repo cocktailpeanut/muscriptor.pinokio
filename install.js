@@ -33,7 +33,6 @@ module.exports = {
       method: "shell.run",
       params: {
         message: [
-          "conda install -y -c conda-forge 7zip",
           "7z x cache/fluidsynth.zip -otools -y",
           "tools\\fluidsynth-v2.5.6-win10-x64-cpp11\\bin\\fluidsynth.exe --version"
         ]
