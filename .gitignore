@@ -9,6 +9,7 @@ venv
 /cache/
 /app/
 /tools/
+__pycache__/
 /AGENTS.md
 /CLAUDE.md
 /GEMINI.md

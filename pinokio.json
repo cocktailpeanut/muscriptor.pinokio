@@ -2,6 +2,8 @@
   "title": "MuScriptor",
   "description": "Local multi-instrument audio-to-MIDI transcription from Kyutai and Mirelo.",
   "icon": "icon.png",
+  "platform": ["darwin", "win32", "linux"],
+  "arch": ["x64", "arm64"],
   "links": [{
     "title": "MuScriptor",
     "links": [{

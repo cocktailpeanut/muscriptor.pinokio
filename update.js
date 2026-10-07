@@ -23,6 +23,12 @@ module.exports = {
       }
     },
     {
+      method: "script.start",
+      params: {
+        uri: "musescore.js"
+      }
+    },
+    {
       method: "shell.run",
       params: {
         path: "app/web",

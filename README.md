@@ -1,6 +1,6 @@
 # MuScriptor for Pinokio
 
-MuScriptor turns music recordings into editable MIDI. It runs locally, recognizes multiple instruments, streams transcription progress to the browser, and lets you download the resulting MIDI or rendered audio.
+MuScriptor turns music recordings into editable MIDI. It runs locally, recognizes multiple instruments, streams transcription progress to the browser, and lets you download MIDI, rendered audio, or printable sheet music.
 
 This launcher installs the upstream [MuScriptor](https://github.com/muscriptor/muscriptor) project, builds its web client, and starts its FastAPI server on a free local port.
 
@@ -19,9 +19,21 @@ The selected model downloads on first start and then uses the Hugging Face cache
 1. Click **Install** and wait for the Python environment and web client to finish building.
 2. Click **Start Small**, **Start Medium**, or **Start Large**.
 3. When the model is loaded, Pinokio automatically opens **Open Web UI**.
-4. Drop an audio file into the page, optionally select expected instruments, and download the generated MIDI or WAV.
+4. Drop an audio file into the page, optionally select expected instruments, and download MIDI, WAV, or **Sheet music** from **Download**.
 
-**Update** pulls both the launcher (when it has a Git remote) and the upstream app, then refreshes dependencies and rebuilds the web client. **Reset** removes the cloned app and its virtual environment so the next install starts cleanly.
+**Update** pulls both the launcher (when it has a Git remote) and the upstream app, then refreshes dependencies and rebuilds the web client. **Reset** removes the cloned app, its virtual environment, and the bundled tools so the next install starts cleanly.
+
+## Sheet music
+
+The launcher automatically downloads a private copy of **MuseScore Studio 4.7.5** from its official release during Install or Update. Start also installs it if it is missing, so existing installations need no separate setup. Downloads are checked against the release's SHA-256 digests, and the executable's version is verified before use.
+
+MuseScore lives in `tools/musescore/`; the launcher sets `MUSCRIPTOR_MUSESCORE` automatically. You do not need to install MuseScore into Applications, change your PATH, or configure an environment variable. The first setup downloads about 130–210 MB; later starts reuse the installed copy.
+
+- **macOS 11+ (Apple Silicon and Intel):** copies the signed application from the official disk image into the project.
+- **Windows 10+ (x64):** extracts the official portable package using Pinokio's bundled 7-Zip, without a system installer. Windows 11 ARM64 uses the x64 package through Windows' x64 emulation.
+- **Linux (x64 and ARM64):** extracts the official AppImage and uses its `AppRun` entry point. This avoids requiring FUSE. A recent distribution compatible with MuseScore's AppImage is required (for example Ubuntu 22.04+); rendering runs without a display using Qt's offscreen backend.
+
+After transcription, choose **Download → Sheet music** for the score PDFs and MusicXML. If MuScriptor was already running when this launcher change was installed, stop and start it once to pick up the automatic MuseScore configuration.
 
 ## HTTP API
 
@@ -33,6 +45,7 @@ Useful endpoints:
 - `GET /instruments` lists valid instrument names.
 - `POST /transcribe` accepts multipart audio and streams Server-Sent Events (SSE).
 - `POST /auralize` renders uploaded MIDI as WAV. The launcher installs FluidSynth for this route; browser playback uses its own synthesizer.
+- `POST /sheets` accepts a `midi` file and returns a ZIP containing the full score PDF, instrument PDFs, MusicXML, and MIDI. Set `quantized=true` only for MIDI already aligned to the beat grid.
 - `GET /docs` opens the generated FastAPI documentation.
 
 Each `/transcribe` stream ends with a `midi` event whose `data` field contains the generated MIDI as base64.
@@ -100,6 +113,37 @@ curl http://127.0.0.1:PORT/health
 curl http://127.0.0.1:PORT/instruments
 ```
 
+Download sheet music from a MIDI file:
+
+```bash
+curl --fail -F "midi=@score.mid" \
+  http://127.0.0.1:PORT/sheets -o sheets.zip
+```
+
+```javascript
+import { readFile, writeFile } from "node:fs/promises"
+
+const form = new FormData()
+form.append("midi", new Blob([await readFile("score.mid")]), "score.mid")
+const response = await fetch("http://127.0.0.1:PORT/sheets", {
+  method: "POST", body: form
+})
+if (!response.ok) throw new Error(await response.text())
+await writeFile("sheets.zip", Buffer.from(await response.arrayBuffer()))
+```
+
+```python
+import requests
+
+with open("score.mid", "rb") as midi:
+    response = requests.post(
+        "http://127.0.0.1:PORT/sheets", files={"midi": ("score.mid", midi)}
+    )
+response.raise_for_status()
+with open("sheets.zip", "wb") as archive:
+    archive.write(response.content)
+```
+
 ## Storage and licenses
 
 - Application source and its virtual environment live under `app/`.
@@ -107,3 +151,4 @@ curl http://127.0.0.1:PORT/instruments
 - Uploaded files are processed in memory; the server does not maintain a user library.
 - MuScriptor application code is MIT licensed. Published model weights are CC BY-NC 4.0; review the model cards and original project terms before use.
 - FluidSynth is installed from conda-forge on macOS/Linux or downloaded from its official GitHub release on Windows; its source is LGPL-2.1.
+- MuseScore Studio is downloaded from the [official 4.7.5 release](https://github.com/musescore/MuseScore/releases/tag/v4.7.5), with the complete application's resources and license files retained under `tools/musescore/`. MuseScore is GPL-3.0 licensed; its source is available in the same release. Downloaded installers are cached under `cache/musescore/`.
